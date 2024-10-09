@@ -120,6 +120,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
 
 [[package]]
+name = "lexist"
+version = "0.1.0"
+dependencies = [
+ "lazy_static",
+ "serde_json",
+ "sudachi",
+]
+
+[[package]]
 name = "libc"
 version = "0.2.159"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -155,13 +164,6 @@ name = "minimal-lexical"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "68354c5c6bd36d73ff3feceb05efa59b6acb7626617f4962be322a825e61f79a"
-
-[[package]]
-name = "nhg_wdst"
-version = "0.1.0"
-dependencies = [
- "sudachi",
-]
 
 [[package]]
 name = "nom"
