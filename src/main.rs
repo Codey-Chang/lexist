@@ -3,7 +3,7 @@ use lexist::common::SlTokenizer;
 use sudachi::prelude::Mode;
 fn main() {
 
-    let data = "今日はいい天気ですね。";
+    let data = "太郎は次郎が持っている本を花子に渡した。\n";
     
     let tokenizer = SlTokenizer::new();
     
