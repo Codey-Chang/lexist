@@ -1,14 +1,15 @@
+use std::fs;
 
-use lexist::common::SlTokenizer;
+use lexist::common::SfTokenizer;
 use sudachi::prelude::Mode;
+
 fn main() {
 
-    let data = "太郎は次郎が持っている本を花子に渡した。\n";
-    
-    let tokenizer = SlTokenizer::new();
-    
-    tokenizer.tokenize(data, Mode::C).iter().for_each(|m| {
+    let data = fs::read_to_string("resources/input.txt").unwrap();
+
+    let mut tokenizer = SfTokenizer::new_built(Mode::C);
+
+    tokenizer.tokenize(&data).iter().for_each(|m| {
         println!("{:?}", m);
     });
-
 }
