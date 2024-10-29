@@ -1,14 +1,27 @@
 use std::{collections::HashSet, path::Path, str::from_utf8};
 
 use lexist::tokenizer::SfTokenizer;
-use quick_xml::{events::Event, NsReader, Reader};
+use mdict::MDictBuilder;
+use quick_xml::{events::Event, Reader};
 use sudachi::prelude::Mode;
 
 use epub::doc::EpubDoc;
 
 fn main() {
     // let mut tokenizer = SfTokenizer::new_built(Mode::C);
+    let buider = MDictBuilder::new("../resources/mdx/test.mdx");
+    let mut dict = buider.build().unwrap();
+    let res = dict.lookup("私").unwrap().unwrap();
+    println!("{:?}", res);
+}
 
+fn tokenize_txt(text: &str) -> Vec<String> {
+    let mut tokenizer = SfTokenizer::new_built(Mode::C);
+    let res = tokenizer.tokenize(text);
+
+    res.iter()
+        .map(|morph| morph.surface().to_string())
+        .collect()
 }
 
 fn xml_inside_tags(content: &str, tag: &str) -> HashSet<String> {
@@ -44,7 +57,7 @@ fn xml_inside_tags(content: &str, tag: &str) -> HashSet<String> {
 }
 
 
-fn read_txt_from_epubs(path: &Path) -> Vec<String> {
+fn read_txts_from_epubs(path: &Path) -> Vec<String> {
     let mut doc = EpubDoc::new(path).unwrap();
     let spines = doc.spine.clone();
 
