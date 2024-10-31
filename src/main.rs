@@ -9,10 +9,10 @@ use epub::doc::EpubDoc;
 
 fn main() {
     // let mut tokenizer = SfTokenizer::new_built(Mode::C);
-    let buider = MDictBuilder::new("../resources/mdx/test.mdx");
+    let buider = MDictBuilder::new("resources/mdx/Shogakukanjcv3.mdx");
     let mut dict = buider.build().unwrap();
     let res = dict.lookup("私").unwrap().unwrap();
-    println!("{:?}", res);
+    println!("{:?}", res.definition);
 }
 
 fn tokenize_txt(text: &str) -> Vec<String> {
