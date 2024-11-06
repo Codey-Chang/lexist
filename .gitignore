@@ -1,3 +1,6 @@
 /target
 /resources/system.dic
 /resources/mdx/*.mdx
+/resources/css/*.css
+/resources/epub/*.epub
+/output.apkg

@@ -1,5 +1,6 @@
-use std::{collections::HashSet, path::Path, str::from_utf8};
+use std::{collections::HashSet, fs::read_to_string, path::Path, str::from_utf8};
 
+use genanki_rs::{Deck, Field, Model, Note, Template};
 use lexist::tokenizer::SfTokenizer;
 use mdict::MDictBuilder;
 use quick_xml::{events::Event, Reader};
@@ -7,12 +8,117 @@ use sudachi::prelude::Mode;
 
 use epub::doc::EpubDoc;
 
+#[derive(Debug)]
+struct NoteType {
+    front: String,
+    back: String,
+}
+
 fn main() {
-    // let mut tokenizer = SfTokenizer::new_built(Mode::C);
+    
+}
+
+fn lookup_word(word: &str) -> String {
     let buider = MDictBuilder::new("resources/mdx/Shogakukanjcv3.mdx");
+
     let mut dict = buider.build().unwrap();
-    let res = dict.lookup("私").unwrap().unwrap();
-    println!("{:?}", res.definition);
+
+    match dict.lookup(word).unwrap() {
+        Some(res) => {
+            let defination = res.definition;
+            if defination.starts_with("@") {
+                println!("{}", defination);
+                let key = defination.split("=").collect::<Vec<&str>>()[1].trim();
+                println!("{}", key);
+                match dict.lookup(key).unwrap() {
+                    Some(res) => {
+                        return res.definition;
+                    }
+                    None => {
+                        return String::new();
+                    } 
+                }
+            } else {
+                return defination;
+            }
+        }
+        None => {
+            return String::new();
+        }
+    }
+}
+
+fn run() {
+
+    let txts = read_txts_from_epubs(Path::new("resources/epub/1.epub"));
+
+    let mut tokenizer = SfTokenizer::new_built(Mode::C);
+
+    let mut words = HashSet::new();
+
+    txts.iter().for_each(|txt| {
+        let res = tokenizer.tokenize(txt);
+
+        res.iter().for_each(|morph| {
+            words.insert(morph.dictionary_form().to_string());
+        });
+    });
+
+    let mut notfound = Vec::new();
+    let mut notes = Vec::new();
+
+    let buider = MDictBuilder::new("resources/mdx/Shogakukanjcv3.mdx");
+
+    let mut dict = buider.build().unwrap();
+    words.iter().for_each(|word| {
+
+        match dict.lookup(word).unwrap() {
+            Some(res) => {
+                let mut note: NoteType = NoteType {
+                    front: word.clone(),
+                    back: String::new(),
+                };
+                let defination = res.definition;
+                if defination.starts_with("@") {
+                    let key = defination.split("=").collect::<Vec<&str>>()[1].trim();
+                    dict.lookup(key).unwrap().map(|res| {
+                        note.back = res.definition;
+                    });
+                } else {
+
+                    note.back = defination;
+                }
+
+                notes.push(note);
+            }
+            None => {
+                notfound.push(word);
+            }
+            
+        }
+    });
+
+    notfound.iter().for_each(|key| {
+        println!("{}", key);
+    });
+
+    let css = Path::new("resources/css/Shogakukanjcv3.css");
+    let css = read_to_string(css).unwrap();
+
+    let model = Model::new(
+        1607392319,
+        "Simple Model",
+        vec![
+            Field::new("Front"),
+            Field::new("Back"),
+        ],
+        vec![Template::new("Card 1").qfmt("{{Front}}").afmt("{{FrontSide}}<hr id=answer>{{Back}}")],
+    ).css(css);
+    let mut deck = Deck::new(1234, "Example Deck", "Example Deck");
+    notes.iter().for_each(|note| {
+        deck.add_note(Note::new(model.clone(), vec![&note.front, &note.back]).unwrap());
+    });
+    deck.write_to_file("output.apkg").unwrap();
 }
 
 fn tokenize_txt(text: &str) -> Vec<String> {
@@ -55,7 +161,6 @@ fn xml_inside_tags(content: &str, tag: &str) -> HashSet<String> {
     }
     ret
 }
-
 
 fn read_txts_from_epubs(path: &Path) -> Vec<String> {
     let mut doc = EpubDoc::new(path).unwrap();
