@@ -3,12 +3,12 @@ use ::epub::doc::DocError;
 use thiserror::Error;
 
 mod epub;
-trait DataSource {
-    fn fetech_text(&self) -> Result<String, DataSourceError>;
+pub trait Source {
+    fn fetech_text(&self) -> Result<String, SourceError>;
 }
 
 #[derive(Debug, Error)]
-pub enum DataSourceError {
+pub enum SourceError {
     #[error("Failed to fetch text from epub source")]
     EpubError{
         #[from]

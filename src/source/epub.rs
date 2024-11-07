@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use epub::doc::EpubDoc;
 
-use super::DataSource;
+use super::Source;
 
 struct EpubSource {
     path: PathBuf,
@@ -16,8 +16,8 @@ impl EpubSource {
     }
 }
 
-impl DataSource for EpubSource {
-    fn fetech_text(&self) -> Result<String, super::DataSourceError> {
+impl Source for EpubSource {
+    fn fetech_text(&self) -> Result<String, super::SourceError> {
         let mut doc = EpubDoc::new(&self.path)?;
         let spine_ids = doc.spine.clone();
         let mut ret = "".to_string();
