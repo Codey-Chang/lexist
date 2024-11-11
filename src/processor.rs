@@ -1,6 +1,6 @@
 use quick_xml::Error;
 use thiserror::Error;
-mod epub;
+pub mod epub;
 
 pub trait Processor {
     fn process(&self, text: &str) -> Result<String, ProcessError>;

@@ -122,3 +122,41 @@ impl SfTokenizer {
         &self.result
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use sudachi::sentence_detector::{NonBreakChecker, SentenceDetector};
+
+    use super::*;
+
+    #[test]
+    fn test_sl_tokenizer() {
+        let mut tokenizer = SlTokenizer::new();
+        let tokens = tokenizer.tokenize("俺は三度目、彼女を守る。──彼女を、守れ!!", Mode::A);
+        tokens.iter().for_each(|t| {
+            println!("{}", t.normalized_form());
+        });
+    }
+
+    #[test]
+    fn test_sf_tokenizer() {
+        let mut tokenizer = SfTokenizer::new_built(Mode::A);
+        let tokens = tokenizer.tokenize("俺は三度目、彼女を守る。──彼女を、守れ!!");
+        tokens.iter().for_each(|t| {
+            println!("{}", t.normalized_form());
+        });
+    }
+
+    #[test]
+    fn get_eos_with_non_break_checker() {
+        let text = "「お前さんも相当図々しいな！分けん！";
+        let tokenizer = SfTokenizer::new_built(Mode::A);
+        let lexicon = tokenizer.dict().lexicon();
+        let checker = NonBreakChecker::new(lexicon);
+
+        let sd = SentenceDetector::new();
+        sd.get_eos(&text, Some(&checker)).iter().for_each(|eos| {
+            println!("{}", eos);
+        });
+    }
+}
