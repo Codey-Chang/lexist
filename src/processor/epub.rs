@@ -2,18 +2,13 @@ use quick_xml::{events::Event, Reader};
 
 use super::Processor;
 
-
-
-pub struct PTagTextExtractor {
-
-}
+pub struct PTagTextExtractor;
 
 impl Processor for PTagTextExtractor {
 
     fn process(&self, text: &str) -> Result<String, super::ProcessError> {
         let mut ret = "".to_string();
         let mut rdr = Reader::from_str(text);
-        rdr.config_mut().trim_text(true);
 
         let mut inside_p_tag = false;
         let mut inside_rt_tag = false;
@@ -35,7 +30,8 @@ impl Processor for PTagTextExtractor {
                 },
                 Ok(Event::Text(e)) if inside_p_tag => {
                     if !inside_rt_tag {
-                        ret.push_str(e.unescape()?.as_ref());
+                        let s = e.unescape()?;
+                        ret.push_str(s.as_ref());
                     }
                 },
                 Ok(Event::End(e)) => {
@@ -59,6 +55,6 @@ impl Processor for PTagTextExtractor {
 
 impl PTagTextExtractor {
     pub fn new() -> Self {
-        PTagTextExtractor{}
+        PTagTextExtractor
     }
 }

@@ -1,4 +1,4 @@
-use lexist::{extractor, processor::epub::PTagTextExtractor, source::epub::EpubSource, tokenizer::{self, SlTokenizer}};
+use lexist::{extractor, processor::{cleaner::Cleaner, epub::PTagTextExtractor}, source::epub::EpubSource, tokenizer::{self, SlTokenizer}};
 use mdict::MDictBuilder;
 use sudachi::prelude::Mode;
 fn main() {
@@ -7,19 +7,15 @@ fn main() {
 
     let mut extractor = extractor::Extractor::new(epub_source);
 
-    extractor.add_processor(PTagTextExtractor::new());
+    let ptagprocessor = PTagTextExtractor::new();
+    let cleaner = Cleaner::new();
+
+    extractor.add_processor(ptagprocessor);
+    extractor.add_processor(cleaner);
 
     let text = extractor.extract().unwrap();
 
     println!("{}", text);
-
-    let mut sltokenizer = SlTokenizer::new();
-
-    let tokens = sltokenizer.tokenize(&text, Mode::A);
-
-    for token in tokens.iter() {
-        println!("{}", token.normalized_form());
-    }
 
     // let mut sftokenizer = tokenizer::SfTokenizer::new_built(Mode::A);
 
