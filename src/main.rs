@@ -1,6 +1,5 @@
-use lexist::{extractor, processor::{cleaner::Cleaner, epub::PTagTextExtractor}, source::epub::EpubSource, tokenizer::{self, SlTokenizer}};
-use mdict::MDictBuilder;
-use sudachi::prelude::Mode;
+use lexist::{extractor, processor::epub::PTagTextExtractor, source::epub::EpubSource};
+use sudachi::{analysis::stateful_tokenizer::StatefulTokenizer, sentence_splitter::{SentenceSplitter, SplitSentences}};
 fn main() {
 
     let epub_source = EpubSource::new("resources/epub/1.epub");
@@ -8,18 +7,19 @@ fn main() {
     let mut extractor = extractor::Extractor::new(epub_source);
 
     let ptagprocessor = PTagTextExtractor::new();
-    let cleaner = Cleaner::new();
 
     extractor.add_processor(ptagprocessor);
-    extractor.add_processor(cleaner);
 
     let text = extractor.extract().unwrap();
 
-    println!("{}", text);
+    let splitter = SentenceSplitter::new();
+    let sentences: Vec<&str> = splitter.split(&text).map(|(_, s)| {
+        s
+    }).collect();
 
-    // let mut sftokenizer = tokenizer::SfTokenizer::new_built(Mode::A);
-
-    // let tokens = sftokenizer.tokenize(&text);
+    sentences.iter().for_each(|s| {
+        println!("{}", s);
+    });
 
     // let mut mdict = MDictBuilder::new("resources/mdx/Shogakukanjcv3.mdx").build().unwrap();
 

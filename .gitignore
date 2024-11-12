@@ -1,7 +1,9 @@
 /target
 /resources/system.dic
 /resources/mdx/*.mdx
-!/resources/mdx/Shogakukanjcv3
+!/resources/mdx/Shogakukanjcv3.mdx
 /resources/css/*.css
+!/resources/css/Shogakukanjcv3.css
 /resources/epub/*.epub
+!/resources/epub/1.epub
 /output.apkg
