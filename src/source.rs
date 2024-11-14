@@ -1,4 +1,3 @@
-
 use ::epub::doc::DocError;
 use thiserror::Error;
 
@@ -10,8 +9,8 @@ pub trait Source {
 #[derive(Debug, Error)]
 pub enum SourceError {
     #[error("Failed to fetch text from epub source")]
-    EpubError{
+    EpubError {
         #[from]
-        source: DocError
+        source: DocError,
     },
 }

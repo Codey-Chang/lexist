@@ -1,9 +1,13 @@
-use std::{path::{Path, PathBuf}, rc::Rc};
+use std::{collections::HashSet, fs::read_to_string};
 
-use lexist::{extractor, processor::epub::PTagTextExtractor, source::epub::EpubSource};
-use sudachi::{analysis::{stateful_tokenizer::StatefulTokenizer, stateless_tokenizer::StatelessTokenizer}, config::{Config, ConfigBuilder}, dic::dictionary::JapaneseDictionary, prelude::{Mode, MorphemeList}, sentence_splitter::{SentenceSplitter, SplitSentences}};
+use genanki_rs::{Deck, Field, Model, Note, Template};
+use lexist::{extractor, processor::epub::PTagTextExtractor, source::epub::EpubSource, tokenizer};
+use mdict::MDictBuilder;
+use sudachi::{
+    prelude::Mode,
+    sentence_splitter::{SentenceSplitter, SplitSentences},
+};
 fn main() {
-
     let epub_source = EpubSource::new("resources/epub/1.epub");
 
     let mut extractor = extractor::Extractor::new(epub_source);
@@ -14,41 +18,71 @@ fn main() {
 
     let text = extractor.extract().unwrap();
 
-    let splitter = SentenceSplitter::new();
-    let sentences: Vec<&str> = splitter.split(&text).map(|(_, s)| {
-        s
-    }).collect();
+    let sentences = split_sentences(&text);
 
-    sentences.iter().for_each(|s| {
-        println!("{}", s);
+    let word_set = get_word_set(sentences);
+
+    let mut mdict = MDictBuilder::new("resources/mdx/Shogakukanjcv3.mdx")
+        .build()
+        .unwrap();
+    let mut fields = Vec::new();
+    word_set.iter().take(20).for_each(|w| {
+        match mdict.lookup(w).expect("Failed to lookup") {
+            Some(def) => {
+                println!("{}", def.definition);
+                if !def.definition.starts_with("@") {
+                    fields.push((w.clone(), def.definition));
+                }
+            }
+            None => {
+                println!("{} not found", w);
+            }
+        }
     });
 
-    let config_path = Path::new("resources/sudachi.json");
+    gen_anki_with_css(fields);
+}
 
-    let sudachi_config = ConfigBuilder::from_file(config_path).expect("Failed to load config file").build();
+fn split_sentences(text: &str) -> Vec<&str> {
+    let splitter: SentenceSplitter<'_> = SentenceSplitter::new();
+    splitter.split(text).map(|(_, s)| s).collect()
+}
 
-    let rc_jp_dict = Rc::new(JapaneseDictionary::from_cfg(&sudachi_config).expect("Failed to load dictionary"));
-
-    let mut sf_tok =StatefulTokenizer::new(rc_jp_dict.clone(), Mode::A);
-
-    let mut tokens = MorphemeList::empty(rc_jp_dict.clone());
-
+fn get_word_set(sentences: Vec<&str>) -> HashSet<String> {
+    let mut tok = tokenizer::StatefulTokenizer::new(Mode::A);
+    let mut word_set = HashSet::new();
     sentences.iter().for_each(|s| {
-        sf_tok.reset().push_str(s);
-        sf_tok.do_tokenize().expect("tokenize failed");
-        tokens.collect_results(&mut sf_tok).expect("Failed to collect results");
-        
+        let tokens = tok.tokenize(s);
         tokens.iter().for_each(|t| {
-            println!("{:?}", t.part_of_speech());
+            if word_set.contains(t.dictionary_form()) {
+                return;
+            }
+            let pos = t.part_of_speech().get(0).expect("Failed to get pos");
+            if pos != "空白" && pos != "補助記号" {
+                word_set.insert(t.dictionary_form().to_string());
+                // println!("{:?}", t.dictionary_form());
+            }
         });
     });
+    word_set
+}
 
-    // let mut mdict = MDictBuilder::new("resources/mdx/Shogakukanjcv3.mdx").build().unwrap();
+fn gen_anki_with_css(fields: Vec<(String, String)>) {
+    let css = read_to_string("resources/css/Shogakukanjcv3.css").expect("Failed to read css");
+    let model = Model::new(
+        1607392319,
+        "Jp Model",
+        vec![Field::new("Front"), Field::new("Back")],
+        vec![Template::new("Card 1").qfmt("{{Front}}").afmt("{{Back}}")],
+    )
+    .css(css);
 
-    // for token in tokens.iter() {
-    //     let res = mdict.lookup(token.normalized_form()).unwrap();
-    //     if let Some(res) = res {
-    //         println!("{:?}", res.definition);
-    //     }
-    // }
+    let mut deck = Deck::new(2059400110, "Japanese Deck", "A deck for learning Japanese");
+
+    fields.iter().for_each(|(w, d)| {
+        let note = Note::new(model.clone(), vec![w, d]).expect("Failed to create note");
+        deck.add_note(note);
+    });
+
+    deck.write_to_file("output.apkg").expect("Failed to write to apkg file");
 }

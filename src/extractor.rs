@@ -26,20 +26,19 @@ impl<'a> Extractor<'a> {
     pub fn add_processor(&mut self, processor: impl Processor + 'a) {
         self.processors.push(Box::new(processor));
     }
-    
 }
 
 pub mod error {
 
-    use crate::source::SourceError;
     use crate::processor::ProcessError;
+    use crate::source::SourceError;
     use thiserror::Error;
 
     #[derive(Debug, Error)]
     pub enum ExtractorError {
         #[error("Failed to extract text from source")]
-        SourceError(#[from]SourceError),
+        SourceError(#[from] SourceError),
         #[error("Failed to process text")]
-        ProcessError(#[from]ProcessError),
+        ProcessError(#[from] ProcessError),
     }
 }
