@@ -1,8 +1,7 @@
 use std::{collections::HashSet, fs::read_to_string};
 
 use genanki_rs::{Deck, Field, Model, Note, Template};
-use lexist::{extractor, processor::epub::PTagTextExtractor, source::epub::EpubSource, tokenizer};
-use mdict::MDictBuilder;
+use lexist::{dict::{mdict::{self, MDict}, Dict}, extractor, processor::epub::PTagTextExtractor, source::epub::EpubSource, tokenizer};
 use sudachi::{
     prelude::Mode,
     sentence_splitter::{SentenceSplitter, SplitSentences},
@@ -22,25 +21,40 @@ fn main() {
 
     let word_set = get_word_set(sentences);
 
-    let mut mdict = MDictBuilder::new("resources/mdx/Shogakukanjcv3.mdx")
-        .build()
-        .unwrap();
+    let mut mdict = MDict::new("resources/mdx/Shogakukanjcv3.mdx");
     let mut fields = Vec::new();
-    word_set.iter().take(20).for_each(|w| {
-        match mdict.lookup(w).expect("Failed to lookup") {
-            Some(def) => {
-                println!("{}", def.definition);
-                if !def.definition.starts_with("@") {
-                    fields.push((w.clone(), def.definition));
+    let mut notfound = HashSet::new();
+    word_set
+        .iter()
+        .for_each(|w| match mdict.lookup(w).expect("Failed to lookup") {
+            Some(res) => {
+                if !res.starts_with("@") {
+                    fields.push((w.clone(), res));
+                } else {
+                    let s: Vec<&str> = res.split("=").collect();
+                    let mut s = s[1].to_string();
+
+                    match mdict.lookup(&s).expect("Failed to lookup") {
+                        Some(d) => {
+                            s = d;
+                            fields.push((w.clone(), s));
+                        }
+                        None => {
+                            notfound.insert(w.as_str());
+                        }
+                    }
                 }
             }
             None => {
-                println!("{} not found", w);
+                notfound.insert(w.as_str());
             }
-        }
-    });
+        });
 
     gen_anki_with_css(fields);
+
+    notfound.iter().for_each(|w| {
+        println!("{}", w);
+    });
 }
 
 fn split_sentences(text: &str) -> Vec<&str> {
@@ -84,5 +98,6 @@ fn gen_anki_with_css(fields: Vec<(String, String)>) {
         deck.add_note(note);
     });
 
-    deck.write_to_file("output.apkg").expect("Failed to write to apkg file");
+    deck.write_to_file("output.apkg")
+        .expect("Failed to write to apkg file");
 }
