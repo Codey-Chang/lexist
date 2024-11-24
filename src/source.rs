@@ -6,6 +6,10 @@ pub trait Source {
     fn fetch(&self) -> Result<String, SourceError>;
 }
 
+struct Uri {
+    url: Url,
+}
+
 #[derive(Debug, Error)]
 pub enum SourceError {
     #[error("Failed to fetch text from epub source")]

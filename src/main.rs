@@ -1,7 +1,7 @@
 use std::{collections::HashSet, fs::read_to_string};
 
 use genanki_rs::{Deck, Field, Model, Note, Template};
-use lexist::{dict::{mdict::{self, MDict}, Dict}, extractor, processor::epub::PTagTextExtractor, source::epub::EpubSource, tokenizer};
+use lexist::{dict::{mdict::MDict, Dict}, extractor, processor::epub::PTagTextExtractor, source::epub::EpubSource, tokenizer};
 use sudachi::{
     prelude::Mode,
     sentence_splitter::{SentenceSplitter, SplitSentences},
